@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Churn &amp; Technical Debt Auditor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- Utility bar: scan target + export actions -->
+  <div class="utility-bar">
+    <div class="utility-bar__inner">
+      <div class="brand">
+        <svg class="brand__logo" width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+          <rect x="1" y="1" width="24" height="24" rx="7" fill="url(#logoGradient)" />
+          <path d="M6.5 14.5L9.5 14.5L11 10L14 18L16 13.5L19.5 13.5" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          <defs>
+            <linearGradient id="logoGradient" x1="0" y1="0" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#5cb3ff" />
+              <stop offset="100%" stop-color="#2997ff" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="brand__name">Debt Auditor</span>
+      </div>
+      <div class="utility-bar__actions">
+        <button id="export-json-btn" type="button" class="btn btn--ghost" disabled>
+          Export JSON
+        </button>
+        <button id="export-pdf-btn" type="button" class="btn btn--primary" disabled>
+          Export PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <main id="report-content">
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero__scanline" aria-hidden="true"></div>
+      <h1 class="hero__title">Code Churn &amp; <span class="hero__title-accent">Technical Debt Auditor</span></h1>
+      <p class="hero__subtitle">Find the files quietly costing your team the most time.</p>
+    </section>
+
+    <!-- Scan controls -->
+    <section class="panel panel--form">
+      <form id="analyze-form" class="scan-form">
+        <div class="field field--grow">
+          <label for="repo_path">Repository path</label>
+          <input type="text" id="repo_path" name="repo_path" value="{{ default_repo_path }}" placeholder="/path/to/repo" required />
+        </div>
+
+        <div class="field field--narrow">
+          <label for="lookback">Commits to scan</label>
+          <input type="number" id="lookback" name="lookback" value="1000" min="10" max="20000" />
+        </div>
+
+        <div class="field field--checkbox">
+          <label class="checkbox">
+            <input type="checkbox" id="include_ai_summary" checked />
+            <span>AI summary</span>
+          </label>
+        </div>
+
+        <button type="submit" id="analyze-btn" class="btn btn--accent btn--wide">
+          <span class="btn__label">Run Analysis</span>
+        </button>
+      </form>
+      <p id="status-line" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- Results -->
+    <section id="results" class="results hidden">
+
+      <div class="stat-grid" id="summary-cards"></div>
+
+      <div class="panel panel--chart">
+        <h2 class="panel__title">Top 10 Highest-Risk Files</h2>
+        <canvas id="risk-chart" height="90"></canvas>
+      </div>
+
+      <div id="ai-summary-box" class="panel panel--ai hidden">
+        <h2 class="panel__title">AI Insights</h2>
+        <p id="ai-summary-text" class="ai-summary__text"></p>
+      </div>
+
+      <div class="toolbar panel">
+        <input type="text" id="search-input" class="toolbar__search" placeholder="Search by file name…" />
+        <select id="risk-filter" class="toolbar__select">
+          <option value="all">All risk levels</option>
+          <option value="critical">Critical (75+)</option>
+          <option value="high">High (50–74)</option>
+          <option value="medium">Medium (25–49)</option>
+          <option value="low">Low (0–24)</option>
+        </select>
+      </div>
+
+      <div class="panel panel--table">
+        <div class="table-scroll">
+          <table id="files-table">
+            <thead>
+              <tr>
+                <th class="col-file">File</th>
+                <th>Risk</th>
+                <th>Churn</th>
+                <th>Complexity</th>
+                <th>Markers</th>
+                <th>Commits</th>
+                <th>Authors</th>
+                <th>LOC</th>
+              </tr>
+            </thead>
+            <tbody id="files-tbody"></tbody>
+          </table>
+          <p id="no-results" class="empty-state hidden">No files match your search or filter.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Inspector modal -->
+  <div id="inspector-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-filename">
+    <div class="modal__backdrop" data-close-modal></div>
+    <div class="modal__box">
+      <button id="close-modal-btn" class="modal__close" aria-label="Close" data-close-modal>&times;</button>
+      <div class="modal__header">
+        <span id="modal-band" class="badge"></span>
+        <h2 id="modal-filename" class="modal__title">File details</h2>
+      </div>
+      <div id="modal-content" class="modal__content"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>
